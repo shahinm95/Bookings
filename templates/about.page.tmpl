@@ -1,0 +1,22 @@
+{{template "base" .}}
+
+{{define "content"}}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>This is the about page</h1>
+            <p>this is added via developent mod</p>
+
+            <p>This came from the template and handlers : {{index .StringMap "test"}} </p>
+            
+            <p>
+            {{if ne (index .StringMap "remote_ip") ""}}
+                Your Remote Ip is : {{index .StringMap "remote_ip"}}
+            {{else}}
+                I don't your Ip address yet , visit the <a href="/">Home Page</a> So I can Set It
+            {{end}}
+            </p>
+            </div>
+        </div>
+    </div>
+{{end}}
