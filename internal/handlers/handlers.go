@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/shahinm95/bookings/pkg/config"
-	"github.com/shahinm95/bookings/pkg/models"
-	"github.com/shahinm95/bookings/pkg/render"
+	"github.com/shahinm95/bookings/internal/config"
+	"github.com/shahinm95/bookings/internal/forms"
+	"github.com/shahinm95/bookings/internal/models"
+	"github.com/shahinm95/bookings/internal/render"
 )
 
 // Repo the repository used by the handlers
@@ -57,9 +59,16 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, r, "make-reservation.page.tmpl", &models.TemplateData{})
 }
 
+// PostReservation handles posting of a reservation form
+func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
+	
+}
+
 // Generals renders the room page
 func (m *Repository) Generals(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "generals.page.tmpl", &models.TemplateData{})
+	render.RenderTemplate(w, r, "generals.page.tmpl", &models.TemplateData{
+		Form : forms.New(nil),
+	})
 }
 
 // Majors renders the room page
@@ -76,6 +85,24 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 	w.Write([]byte(fmt.Sprintf("start date is %s and end date is %s", start, end)))
+}
+
+type JsonResponse struct {
+	Ok bool `json:"ok"`
+	Message string `json:"message"`
+}
+
+
+// AvailabilityJson sends back the JSON indecating the search availability
+func (m *Repository) AvailabilityJson(w http.ResponseWriter, r *http.Request) {
+	response := JsonResponse{
+		Ok: true,
+		Message: "Available!",
+	}
+	resJson, err := json.MarshalIndent(response, "", "     ")
+	if err != nil {fmt.Println(err)}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(resJson)
 }
 
 // Contact renders the contact page
