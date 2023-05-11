@@ -1,41 +1,31 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shahinm95/bookings/pkg/config"
 	"github.com/shahinm95/bookings/pkg/handlers"
+	"net/http"
 )
 
-// to get rid off unused packages in mod file => go mod tidy
-// to add packages => go get githubadress
-
-func Routes(app *config.AppCongif) http.Handler {
-	//handleing routes using pat package
-	// mux := pat.New()
-	// mux.Get("/", http.HandlerFunc(handlers.Repo.Home))
-	// mux.Get("/about", http.HandlerFunc(handlers.Repo.About))
-
-	// the reason for using chi library is for using middlewares
-	//middlewares allows us to proccess a request and perform some action on it
+func routes(app *config.AppConfig) http.Handler {
 	mux := chi.NewRouter()
 
-	//usnig a middleware
-	//when program panics and shuts down the application , it will tell the problem
 	mux.Use(middleware.Recoverer)
-
 	mux.Use(NoSurf)
 	mux.Use(SessionLoad)
+
 	mux.Get("/", handlers.Repo.Home)
 	mux.Get("/about", handlers.Repo.About)
+	mux.Get("/generals-quarters", handlers.Repo.Generals)
+	mux.Get("/majors-suite", handlers.Repo.Majors)
+	mux.Get("/search-availability", handlers.Repo.Availability)
+	mux.Get("/contact", handlers.Repo.Contact)
 
-	//serving static files from directory
+	mux.Get("/make-reservation", handlers.Repo.Reservation)
+
 	fileServer := http.FileServer(http.Dir("./static/"))
-	mux.Handle("/static/*", http.StripPrefix("./static", fileServer))
+	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
 	return mux
 }
-
-//writing our own middleware => 

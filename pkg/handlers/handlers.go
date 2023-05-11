@@ -1,63 +1,76 @@
 package handlers
 
 import (
-	"net/http"
-
 	"github.com/shahinm95/bookings/pkg/config"
 	"github.com/shahinm95/bookings/pkg/models"
 	"github.com/shahinm95/bookings/pkg/render"
+	"net/http"
 )
 
-// for creating go temlpate file instead html => home.page.tmpl => create .tmpl file
-
-// handlers should have access to appConfig because handlers should have access to all kind of configurations
-// even though handlers may not use TemplateCache but give access to config file for future usecases
-// like when we connect to database , we share database connection with config and using repository
-// for this we use repository pattern : a commen pattern that allows us to swap compnents out of our application
-// with minimal changes required to codebase
-
-// repository used by handlers
+// Repo the repository used by the handlers
 var Repo *Repository
 
+// Repository is the repository type
 type Repository struct {
-	App *config.AppCongif
+	App *config.AppConfig
 }
- 
-// creates a new Repository
-func NewRepo (a *config.AppCongif) *Repository {
+
+// NewRepo creates a new repository
+func NewRepo(a *config.AppConfig) *Repository {
 	return &Repository{
-		App :a,
+		App: a,
 	}
 }
 
-// it sets repository for handlers
-func NewHandlers (r *Repository) {
+// NewHandlers sets the repository for the handlers
+func NewHandlers(r *Repository) {
 	Repo = r
 }
-// we these function in main file above to get access to Appconfig then store in Repo 
-// then we give stored data in Repo to handler via recievers
 
-
-
-//defining handlers
-// by giving a reciever to handler we giver access to AppConfig data
-func (m *Repository) Home (w http.ResponseWriter, r *http.Request) {
+// Home is the handler for the home page
+func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	remoteIP := r.RemoteAddr
-	m.App.SessionManager.Put(r.Context(), "remote_ip", remoteIP)
+	m.App.Session.Put(r.Context(), "remote_ip", remoteIP)
+
 	render.RenderTemplate(w, "home.page.tmpl", &models.TemplateData{})
-	
 }
 
-func (m *Repository) About (w http.ResponseWriter, r *http.Request){
-	//preform some logic
-	stringMap := map[string]string{}
-	stringMap["test"]= "This is from handlers"
-	// send data to template
+// About is the handler for the about page
+func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
+	// perform some logic
+	stringMap := make(map[string]string)
+	stringMap["test"] = "Hello, again"
 
-	remoteIp := m.App.SessionManager.GetString(r.Context(), "remote_ip")
-	stringMap["remote_ip"] = remoteIp
+	remoteIP := m.App.Session.GetString(r.Context(), "remote_ip")
+	stringMap["remote_ip"] = remoteIP
+
+	// send data to the template
 	render.RenderTemplate(w, "about.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
 	})
-	
+}
+
+// Reservation renders the make a reservation page and displays form
+func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "make-reservation.page.tmpl", &models.TemplateData{})
+}
+
+// Generals renders the room page
+func (m *Repository) Generals(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "generals.page.tmpl", &models.TemplateData{})
+}
+
+// Majors renders the room page
+func (m *Repository) Majors(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "majors.page.tmpl", &models.TemplateData{})
+}
+
+// Availability renders the search availability page
+func (m *Repository) Availability(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "search-availability.page.tmpl", &models.TemplateData{})
+}
+
+// Contact renders the contact page
+func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "contact.page.tmpl", &models.TemplateData{})
 }
