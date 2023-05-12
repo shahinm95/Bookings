@@ -2,7 +2,7 @@ package  models
 
 // Resrvation holds resevation data
 type Reservation struct {
-	FisrtName string
+	FirstName string
 	LastName string
 	Email string
 	Phone string
