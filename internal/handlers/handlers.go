@@ -86,6 +86,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 
 	form.Required("first_name", "last_name", "email")
 	form.MinLength("first_name", 3, r)
+	form.IsEmail("email")
 	if !form.Valid() {
 		data := make(map[string]interface{})
 		data["reservation"]= reservation
@@ -94,9 +95,28 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 			Form : form,
 			Data : data,
 		})
-		fmt.Println(form.Errors.Get("fisrt_name"))
+		fmt.Println(form.Errors.Get("first_name"))
 		return
 	}
+	m.App.Session.Put(r.Context(), "reservation", reservation)
+	http.Redirect(w,r, "/reservation-summary", http.StatusSeeOther)
+}
+
+// ReservationSummary renders summary reservation page
+func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request){
+	reservation , ok :=m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		fmt.Println("Could get reservation from session cookie")
+		m.App.Session.Put(r.Context(), "error", "Could not get reservation from session cookie")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+	m.App.Session.Remove(r.Context(), "reservation")
+	data := map[string]interface{}{}
+	data["reservation"]= reservation
+	render.RenderTemplate(w, r, "reservation-summary.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
 }
 
 // Generals renders the room page
