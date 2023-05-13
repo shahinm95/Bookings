@@ -44,6 +44,7 @@ func main() {
 func run () error {
 	// change this to true when in production
 	app.InProduction = false
+	//what I'm going to put in session 
 	gob.Register(models.Reservation{})
 	// set up the session
 	session = scs.New()
