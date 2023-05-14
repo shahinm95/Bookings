@@ -3,11 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/shahinm95/bookings/internal/config"
 	"github.com/shahinm95/bookings/internal/forms"
+	"github.com/shahinm95/bookings/internal/helpers"
 	"github.com/shahinm95/bookings/internal/models"
 	"github.com/shahinm95/bookings/internal/render"
 )
@@ -34,24 +34,14 @@ func NewHandlers(r *Repository) {
 
 // Home is the handler for the home page
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	remoteIP := r.RemoteAddr
-	m.App.Session.Put(r.Context(), "remote_ip", remoteIP)
-
 	render.RenderTemplate(w, r, "home.page.tmpl", &models.TemplateData{})
 }
 
 // About is the handler for the about page
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
-	// perform some logic
-	stringMap := make(map[string]string)
-	stringMap["test"] = "Hello, again"
-
-	remoteIP := m.App.Session.GetString(r.Context(), "remote_ip")
-	stringMap["remote_ip"] = remoteIP
 
 	// send data to the template
 	render.RenderTemplate(w, r, "about.page.tmpl", &models.TemplateData{
-		StringMap: stringMap,
 	})
 }
 
@@ -70,7 +60,7 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
 		return
 	}
 
@@ -106,7 +96,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request){
 	reservation , ok :=m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		fmt.Println("Could get reservation from session cookie")
+		m.App.ErrorLog.Println("can't get error from session")
 		m.App.Session.Put(r.Context(), "error", "Could not get reservation from session cookie")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
@@ -153,7 +143,10 @@ func (m *Repository) AvailabilityJson(w http.ResponseWriter, r *http.Request) {
 		Message: "Available!",
 	}
 	resJson, err := json.MarshalIndent(response, "", "     ")
-	if err != nil {fmt.Println(err)}
+	if err != nil {
+		helpers.ServerError(w, err)
+		return 
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resJson)
 }
