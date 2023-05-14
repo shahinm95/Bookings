@@ -7,7 +7,7 @@ import (
 	"github.com/shahinm95/bookings/internal/models"
 )
 
-func TestRenderTemplate(t *testing.T) {
+func TestAddDefaultData(t *testing.T) {
 	var td models.TemplateData
 	r, err := getSession()
 	if err != nil {
@@ -31,5 +31,33 @@ func getSession()(*http.Request, error){
 	r = r.WithContext(ctx)
 
 	return r, nil
+
+}
+
+func TestNewTemplates (t *testing.T){
+	NewTemplates(app)
+}
+
+func TestCreateTemplateCache (t *testing.T){
+	pathToTemplates = "./../../templates"
+	_, err := CreateTemplateCache()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+
+func TestRenderTemplate (t *testing.T) {
+	pathToTemplates = "./../../templates"
+	var td models.TemplateData
+	var ww ResponseWriterType
+	r, err := getSession()
+	if err != nil { t.Error(err)}
+
+	err = RenderTemplate(&ww, r, "home.page.tmpl",&td )
+	if err != nil { t.Error("Error writing template to browser",err)}
+
+	err = RenderTemplate(&ww , r, "non-existing.page.tmpl", &td )
+	if err == nil { t.Error("loading template for non-existing one",err)}
 
 }

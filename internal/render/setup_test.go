@@ -29,3 +29,21 @@ func TestMain(m *testing.M) {
 
 		os.Exit(m.Run())
 }
+
+
+type ResponseWriterType struct {
+
+}
+
+func (r *ResponseWriterType) Header () http.Header {
+	var headVar http.Header
+	return headVar
+}
+
+func (r *ResponseWriterType) Write (bytes []byte) (int, error){
+	length := len(bytes)
+	return length, nil
+}
+func (r *ResponseWriterType) WriteHeader (status int) {
+
+}
