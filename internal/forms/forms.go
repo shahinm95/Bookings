@@ -10,8 +10,9 @@ import (
 )
 
 // Form creates a custm form struct , embeds a url.Values object
+var Data url.Values
 type Form struct {
-	url.Values
+	Data url.Values
 	Errors errors
 }
 
@@ -24,19 +25,21 @@ func New (data url.Values) *Form {
 }
 
 // Required check all given field to not be empty
-func (f *Form) Required (fields ...string) {
+func (f *Form) Required (fields ...string)  bool {
 	for _, field := range fields {
-		value := f.Get(field)
+		value := f.Data.Get(field)
 		if strings.TrimSpace(value) == "" {
 			f.Errors.Add(field, "This field can not be blank")
+			return false
 		}
 	}
+	return true
 }
 
 
 // Has check if form field is in post and not empty
 func (f *Form) Has (field string, r *http.Request) bool {
-	x := r.Form.Get(field)
+	x := f.Data.Get(field)
 	if x == "" {
 		f.Errors.Add(field , "This field can not be empty")
 		return false
@@ -51,7 +54,8 @@ func (f *Form) Valid () bool {
 
 // MinLength check for minimum string length
 func(f *Form) MinLength (field string , length int, r *http.Request) bool {
-	x := r.Form.Get(field)
+	x := f.Data.Get(field)
+	
 	if len(x) < length {
 		f.Errors.Add(field, fmt.Sprintf("%s must at least %d characters long", field, length))
 		return false
@@ -61,8 +65,10 @@ func(f *Form) MinLength (field string , length int, r *http.Request) bool {
 
 
 // IsEmail checks for valid email address
-func (f *Form) IsEmail (field string) {
-	if !govalidator.IsEmail(f.Get(field)) {
+func (f *Form) IsEmail (field string) bool {
+	if !govalidator.IsEmail(f.Data.Get(field)) {
 		f.Errors.Add(field , "Email is invalid")
+		return false
 	}
+	return true
 }
