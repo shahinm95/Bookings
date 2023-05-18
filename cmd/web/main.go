@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/shahinm95/bookings/internal/config"
+	"github.com/shahinm95/bookings/internal/driver"
 	"github.com/shahinm95/bookings/internal/handlers"
 	"github.com/shahinm95/bookings/internal/helpers"
 	"github.com/shahinm95/bookings/internal/models"
@@ -26,11 +27,11 @@ var errorLog *log.Logger
 // main is the main function
 func main() {
 
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	defer db.SQL.Close()
 	fmt.Printf("Staring application on port %s", portNumber)
 
 	srv := &http.Server{
@@ -45,7 +46,7 @@ func main() {
 }
 
 
-func run () error {
+func run () (*driver.DB, error) {
 	// change this to true when in production
 	app.InProduction = false
 
@@ -65,10 +66,18 @@ func run () error {
 
 	app.Session = session
 
+
+	//connect to my database
+	log.Println("connecting to database...")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=postgres password=65794943")
+	if err != nil {
+		log.Fatal("error connecting to database", err)
+	}
+	
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
-		return err
+		return nil, err
 	}
 
 	app.TemplateCache = tc
@@ -80,5 +89,5 @@ func run () error {
 	render.NewTemplates(&app)
 	helpers.NewHelper(&app)
 
-	return nil
+	return db,nil
 }
