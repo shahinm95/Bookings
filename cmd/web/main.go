@@ -73,6 +73,8 @@ func run () (*driver.DB, error) {
 	if err != nil {
 		log.Fatal("error connecting to database", err)
 	}
+	log.Println("connected to database successfully")
+
 	
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
@@ -83,7 +85,7 @@ func run () (*driver.DB, error) {
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
 
 	render.NewTemplates(&app)
