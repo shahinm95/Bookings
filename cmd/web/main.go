@@ -57,6 +57,10 @@ func run () (*driver.DB, error) {
 	app.ErrorLog = errorLog
 	//what I'm going to put in session 
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Reservation{})
+	gob.Register(models.Room{})
+	gob.Register(models.RoomRestriction{})
 	// set up the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
@@ -88,7 +92,7 @@ func run () (*driver.DB, error) {
 	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
 
-	render.NewTemplates(&app)
+	render.NewRenderer(&app)
 	helpers.NewHelper(&app)
 
 	return db,nil
