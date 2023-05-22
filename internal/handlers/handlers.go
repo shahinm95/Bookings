@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/shahinm95/bookings/internal/config"
 	"github.com/shahinm95/bookings/internal/driver"
@@ -21,14 +23,14 @@ var Repo *Repository
 // Repository is the repository type
 type Repository struct {
 	App *config.AppConfig
-	DB repository.DatabaseRepo
+	DB  repository.DatabaseRepo
 }
 
 // NewRepo creates a new repository
 func NewRepo(a *config.AppConfig, db *driver.DB) *Repository {
 	return &Repository{
 		App: a,
-		DB: dbrepo.NewPostgresRepo(db.SQL, a),
+		DB:  dbrepo.NewPostgresRepo(db.SQL, a),
 	}
 }
 
@@ -46,17 +48,16 @@ func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 
 	// send data to the template
-	render.Template(w, r, "about.page.tmpl", &models.TemplateData{
-	})
+	render.Template(w, r, "about.page.tmpl", &models.TemplateData{})
 }
 
 // Reservation renders the make a reservation page and displays form
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 	var emptyReservation models.Reservation
 	data := map[string]interface{}{}
-	data["reservation"]= emptyReservation
+	data["reservation"] = emptyReservation
 	render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
-		Form : forms.New(nil),
+		Form: forms.New(nil),
 		Data: data,
 	})
 }
@@ -69,37 +70,82 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reservation := models.Reservation {
+	sd := r.Form.Get("start_date")
+	ed := r.Form.Get("end_date")
+
+	// 2020/01/01 -- 01/02 03:04:05PM '06 -0700
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout, sd)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	endDate, err := time.Parse(layout, ed)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	roomId, err := strconv.Atoi(r.Form.Get("room_id"))
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	reservation := models.Reservation{
 		FirstName: r.Form.Get("first_name"),
-		LastName : r.Form.Get("last_name"),
-		Email: r.Form.Get("email"),
-		Phone : r.Form.Get("phone"),
+		LastName:  r.Form.Get("last_name"),
+		Email:     r.Form.Get("email"),
+		Phone:     r.Form.Get("phone"),
+		StartDate: startDate,
+		EndDate:   endDate,
+		RoomID:    roomId,
 	}
 
 	form := forms.New(r.PostForm)
-	// form.Has("first_name", r)
 
 	form.Required("first_name", "last_name", "email")
 	form.MinLength("first_name", 3, r)
 	form.IsEmail("email")
 	if !form.Valid() {
 		data := make(map[string]interface{})
-		data["reservation"]= reservation
+		data["reservation"] = reservation
 
-		render.Template(w, r ,"make-reservation.page.tmpl", &models.TemplateData{
-			Form : form,
-			Data : data,
+		render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
+			Form: form,
+			Data: data,
 		})
 		fmt.Println(form.Errors.Get("first_name"))
 		return
 	}
+
+	newReservationID, err := m.DB.InsertReservation(reservation)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	restriction := models.RoomRestriction{
+		StartDate:     startDate,
+		EndDate:       endDate,
+		RoomID:        roomId,
+		ReservationID: newReservationID,
+		RestrictionID: 1,
+	}
+
+	err = m.DB.InsertRoomRestriction(restriction)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
 	m.App.Session.Put(r.Context(), "reservation", reservation)
-	http.Redirect(w,r, "/reservation-summary", http.StatusSeeOther)
+	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
 }
 
 // ReservationSummary renders summary reservation page
-func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request){
-	reservation , ok :=m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
+	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		m.App.ErrorLog.Println("can't get error from session")
 		m.App.Session.Put(r.Context(), "error", "Could not get reservation from session cookie")
@@ -108,7 +154,7 @@ func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request){
 	}
 	m.App.Session.Remove(r.Context(), "reservation")
 	data := map[string]interface{}{}
-	data["reservation"]= reservation
+	data["reservation"] = reservation
 	render.Template(w, r, "reservation-summary.page.tmpl", &models.TemplateData{
 		Data: data,
 	})
@@ -128,7 +174,8 @@ func (m *Repository) Majors(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) Availability(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "search-availability.page.tmpl", &models.TemplateData{})
 }
-// PostAvailability checks the search availability 
+
+// PostAvailability checks the search availability
 func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
@@ -136,21 +183,20 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 }
 
 type JsonResponse struct {
-	Ok bool `json:"ok"`
+	Ok      bool   `json:"ok"`
 	Message string `json:"message"`
 }
-
 
 // AvailabilityJson sends back the JSON indecating the search availability
 func (m *Repository) AvailabilityJson(w http.ResponseWriter, r *http.Request) {
 	response := JsonResponse{
-		Ok: true,
+		Ok:      true,
 		Message: "Available!",
 	}
 	resJson, err := json.MarshalIndent(response, "", "     ")
 	if err != nil {
 		helpers.ServerError(w, err)
-		return 
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resJson)

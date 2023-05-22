@@ -50,26 +50,27 @@ func run () (*driver.DB, error) {
 	// change this to true when in production
 	app.InProduction = false
 
+	// error handling
 	infoLog = log.New(os.Stdout, "INFO\t",  log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
 
 	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
+
 	//what I'm going to put in session 
 	gob.Register(models.Reservation{})
 	gob.Register(models.User{})
 	gob.Register(models.Reservation{})
 	gob.Register(models.Room{})
 	gob.Register(models.RoomRestriction{})
+
 	// set up the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = app.InProduction
-
 	app.Session = session
-
 
 	//connect to my database
 	log.Println("connecting to database...")
