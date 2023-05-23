@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/shahinm95/bookings/internal/config"
 	"github.com/shahinm95/bookings/internal/driver"
 	"github.com/shahinm95/bookings/internal/forms"
@@ -53,12 +55,32 @@ func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 
 // Reservation renders the make a reservation page and displays form
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
-	var emptyReservation models.Reservation
+	res , ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, errors.New("reservation not found"))
+		return
+	}
+
+	room , err := m.DB.GetRoomByID(res.RoomID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	res.Room.RoomName = room.RoomName
+
+	sd:= res.StartDate.Format("2006-01-02")
+	ed := res.EndDate.Format("2006-01-02")
+
+	stringMap := make(map[string]string)
+	stringMap["start_date"] =sd
+	stringMap["end_date"] =ed
+
 	data := map[string]interface{}{}
-	data["reservation"] = emptyReservation
+	data["reservation"] = res
 	render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
 		Form: forms.New(nil),
 		Data: data,
+		StringMap: stringMap,
 	})
 }
 
@@ -193,7 +215,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rooms , err := m.DB.SearchAvailabilityForAllRooms(startDate, endDate)
+	rooms, err := m.DB.SearchAvailabilityForAllRooms(startDate, endDate)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
@@ -204,21 +226,21 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(rooms) == 0 {
 		m.App.Session.Put(r.Context(), "error", "No available Room Found")
-		http.Redirect(w, r, "/search-availability" , http.StatusSeeOther)
-		return 
+		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
+		return
 	}
 	data := make(map[string]interface{})
 	data["rooms"] = rooms
 
 	res := models.Reservation{
 		StartDate: startDate,
-		EndDate: endDate,
+		EndDate:   endDate,
 	}
 
-	m.App.Session.Put(r.Context(), "reservation",res)
+	m.App.Session.Put(r.Context(), "reservation", res)
 
 	render.Template(w, r, "choose-room.page.tmpl", &models.TemplateData{
-		Data : data,
+		Data: data,
 	})
 }
 
@@ -245,4 +267,23 @@ func (m *Repository) AvailabilityJson(w http.ResponseWriter, r *http.Request) {
 // Contact renders the contact page
 func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "contact.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
+	roomID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	res, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, errors.New("no reservation found"))
+	}
+
+	res.RoomID = roomID
+	m.App.Session.Put(r.Context(), "reservation", res)
+
+	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+
 }
