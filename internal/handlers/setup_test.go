@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
@@ -15,7 +16,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/justinas/nosurf"
 	"github.com/shahinm95/bookings/internal/config"
-	"github.com/shahinm95/bookings/internal/driver"
 	"github.com/shahinm95/bookings/internal/models"
 	"github.com/shahinm95/bookings/internal/render"
 )
@@ -24,9 +24,7 @@ var app config.AppConfig
 var session *scs.SessionManager
 var functions = template.FuncMap{}
 
-
-
-func getRoutes () http.Handler {
+func TestMain(m *testing.M) {
 	// change this to true when in production
 	app.InProduction = false
 	gob.Register(models.Reservation{})
@@ -43,24 +41,23 @@ func getRoutes () http.Handler {
 		log.Fatal("cannot create template cache")
 	}
 
-	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=postgres password=65794943")
-	if err != nil {
-		log.Fatal("error connecting to database", err)
-	}
-	
 	app.TemplateCache = tc
 	app.UseCache = true
-	repo := NewRepo(&app, db)
+	repo := NewTestRepo(&app)
 	NewHandlers(repo)
 
-	
-	infoLog := log.New(os.Stdout, "INFO\t",  log.Ldate|log.Ltime)
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
 
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
-	
+
 	render.NewRenderer(&app)
+
+	os.Exit(m.Run())
+}
+
+func getRoutes() http.Handler {
 
 	mux := chi.NewRouter()
 
@@ -80,7 +77,7 @@ func getRoutes () http.Handler {
 	mux.Get("/make-reservation", Repo.Reservation)
 	mux.Post("/make-reservation", Repo.PostReservation)
 	mux.Get("/reservation-summary", Repo.ReservationSummary)
-	
+
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
@@ -90,7 +87,6 @@ func getRoutes () http.Handler {
 // NoSurf is the csrf protection middleware
 func NoSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
-	
 
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,
@@ -106,10 +102,9 @@ func SessionLoad(next http.Handler) http.Handler {
 	return session.LoadAndSave(next)
 }
 
-
 // CreateTemplateCache creates a template cache as a map
 func CreateTestTemplateCache() (map[string]*template.Template, error) {
-	
+
 	myCache := map[string]*template.Template{}
 
 	pages, err := filepath.Glob(fmt.Sprintf("%s/*.page.tmpl", pathToTemplates))
