@@ -3,6 +3,13 @@ package handlers
 import (
 	"encoding/gob"
 	"fmt"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/justinas/nosurf"
+	"github.com/shahinm95/bookings/internal/config"
+	"github.com/shahinm95/bookings/internal/models"
+	"github.com/shahinm95/bookings/internal/render"
 	"html/template"
 	"log"
 	"net/http"
@@ -10,41 +17,18 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/alexedwards/scs/v2"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/justinas/nosurf"
-	"github.com/shahinm95/bookings/internal/config"
-	"github.com/shahinm95/bookings/internal/models"
-	"github.com/shahinm95/bookings/internal/render"
 )
 
 var app config.AppConfig
 var session *scs.SessionManager
+var pathToTemplates = "./../../templates"
 var functions = template.FuncMap{}
 
 func TestMain(m *testing.M) {
+	gob.Register(models.Reservation{})
+
 	// change this to true when in production
 	app.InProduction = false
-	gob.Register(models.Reservation{})
-	// set up the session
-	session = scs.New()
-	session.Lifetime = 24 * time.Hour
-	session.Cookie.Persist = true
-	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = app.InProduction
-
-	app.Session = session
-	tc, err := CreateTestTemplateCache()
-	if err != nil {
-		log.Fatal("cannot create template cache")
-	}
-
-	app.TemplateCache = tc
-	app.UseCache = true
-	repo := NewTestRepo(&app)
-	NewHandlers(repo)
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
@@ -52,26 +36,45 @@ func TestMain(m *testing.M) {
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
 
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.InProduction
+
+	app.Session = session
+
+	tc, err := CreateTestTemplateCache()
+	if err != nil {
+		log.Fatal("cannot create template cache")
+	}
+
+	app.TemplateCache = tc
+	app.UseCache = true
+
+	repo := NewTestRepo(&app)
+	NewHandlers(repo)
 	render.NewRenderer(&app)
 
 	os.Exit(m.Run())
 }
 
 func getRoutes() http.Handler {
-
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.Recoverer)
-	// mux.Use(NoSurf)
+	//mux.Use(NoSurf)
 	mux.Use(SessionLoad)
 
 	mux.Get("/", Repo.Home)
 	mux.Get("/about", Repo.About)
 	mux.Get("/generals-quarters", Repo.Generals)
 	mux.Get("/majors-suite", Repo.Majors)
+
 	mux.Get("/search-availability", Repo.Availability)
 	mux.Post("/search-availability", Repo.PostAvailability)
-	mux.Post("/search-availability-json", Repo.AvailabilityJson)
+	mux.Post("/search-availability-json", Repo.AvailabilityJSON)
+
 	mux.Get("/contact", Repo.Contact)
 
 	mux.Get("/make-reservation", Repo.Reservation)
@@ -84,7 +87,7 @@ func getRoutes() http.Handler {
 	return mux
 }
 
-// NoSurf is the csrf protection middleware
+// NoSurf adds CSRF protection to all POST requests
 func NoSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
 
@@ -97,12 +100,12 @@ func NoSurf(next http.Handler) http.Handler {
 	return csrfHandler
 }
 
-// SessionLoad loads and saves session data for current request
+// SessionLoad loads and saves the session on every request
 func SessionLoad(next http.Handler) http.Handler {
 	return session.LoadAndSave(next)
 }
 
-// CreateTemplateCache creates a template cache as a map
+// CreateTestTemplateCache creates a template cache as a map
 func CreateTestTemplateCache() (map[string]*template.Template, error) {
 
 	myCache := map[string]*template.Template{}
@@ -136,5 +139,3 @@ func CreateTestTemplateCache() (map[string]*template.Template, error) {
 
 	return myCache, nil
 }
-
-var pathToTemplates = "./../../templates"
