@@ -2,6 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/shahinm95/bookings/internal/config"
 	"github.com/shahinm95/bookings/internal/driver"
 	"github.com/shahinm95/bookings/internal/forms"
@@ -9,10 +15,6 @@ import (
 	"github.com/shahinm95/bookings/internal/render"
 	"github.com/shahinm95/bookings/internal/repository"
 	"github.com/shahinm95/bookings/internal/repository/dbrepo"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // Repo the repository used by the handlers
@@ -45,7 +47,7 @@ func NewHandlers(r *Repository) {
 	Repo = r
 }
 
-//Home is the home page handler
+// Home is the home page handler
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "home.page.tmpl", &models.TemplateData{})
 }
@@ -178,6 +180,39 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
+
+	// send notifications via email - first to guest
+	htmlMessage := fmt.Sprintf(`
+<strong>Reservation Confirmation </strong> <br>
+Dear %s:, <br>
+This is to confirm your reservation from %s to %s
+`, reservation.FirstName, reservation.StartDate.Format("2006-01-02"), reservation.EndDate.Format("2006-01-02"))
+
+	guestMsg := models.MailData{
+		To:      reservation.Email,
+		From:    "me@here.com",
+		Subject: "Reservation Confirmation",
+		Content: htmlMessage,
+	}
+
+	m.App.MailChan <- guestMsg
+
+	// send notifications via email - to admin
+	adminMessage := fmt.Sprintf(`
+<strong>Reservation Confirmation </strong> <br>
+Dear %s:, <br>
+This is to confirm a reservation from %s to %s
+`, "Admin", reservation.StartDate.Format("2006-01-02"), reservation.EndDate.Format("2006-01-02"))
+
+	adminMsg := models.MailData{
+		To:      "admin@here.com",
+		From:    "me@here.com",
+		Subject: "Reservation Confirmation",
+		Content: adminMessage,
+		Template: "basic.html",
+	}
+
+	m.App.MailChan <- adminMsg
 
 	m.App.Session.Put(r.Context(), "reservation", reservation)
 

@@ -31,9 +31,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.SQL.Close()
-	fmt.Printf("Staring application on port %s", portNumber)
 
+	defer db.SQL.Close()
+
+	defer close(app.MailChan)
+	go listenForMail()
+	fmt.Println("starting mail listener...")
+
+	fmt.Printf("Staring application on port %s", portNumber)	
 	srv := &http.Server{
 		Addr:    portNumber,
 		Handler: routes(&app),
@@ -63,6 +68,9 @@ func run () (*driver.DB, error) {
 	gob.Register(models.Reservation{})
 	gob.Register(models.Room{})
 	gob.Register(models.RoomRestriction{})
+
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
 
 	// set up the session
 	session = scs.New()
