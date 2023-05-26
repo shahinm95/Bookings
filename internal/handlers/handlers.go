@@ -12,6 +12,7 @@ import (
 	"github.com/shahinm95/bookings/internal/config"
 	"github.com/shahinm95/bookings/internal/driver"
 	"github.com/shahinm95/bookings/internal/forms"
+	"github.com/shahinm95/bookings/internal/helpers"
 	"github.com/shahinm95/bookings/internal/models"
 	"github.com/shahinm95/bookings/internal/render"
 	"github.com/shahinm95/bookings/internal/repository"
@@ -504,8 +505,26 @@ func (m *Repository) Logout (w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Repository) AdminDashboard (w http.ResponseWriter, r *http.Request) {
-	form:= forms.New(r.PostForm)
-	render.Template(w, r, "admin-dashboard.page.tmpl", &models.TemplateData{
-		Form: form,
+	render.Template(w, r, "admin-dashboard.page.tmpl", &models.TemplateData{})
+}
+
+
+func (m *Repository) AdminNewReservations (w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-new-reservations.page.tmpl", &models.TemplateData{})
+}
+func (m *Repository) AdminAllReservations (w http.ResponseWriter, r *http.Request) {
+	reservations , err := m.DB.AllReservations()
+	if err != nil {
+		helpers.ServerError(w , err) 
+	}
+	data := make(map[string]interface{})
+	data["reservations"] =reservations
+	render.Template(w, r, "admin-all-reservations.page.tmpl", &models.TemplateData{
+		Data: data,
 	})
+}
+
+
+func (m *Repository) AdminReservationsCalendar (w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-reservations-calendar.page.tmpl", &models.TemplateData{})
 }

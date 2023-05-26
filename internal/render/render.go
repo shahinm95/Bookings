@@ -7,13 +7,16 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/justinas/nosurf"
 	"github.com/shahinm95/bookings/internal/config"
 	"github.com/shahinm95/bookings/internal/models"
 )
 
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"humanDate" : HumanDate,
+}
 
 var app *config.AppConfig
 
@@ -22,9 +25,14 @@ func NewRenderer(a *config.AppConfig) {
 	app = a
 }
 
+// HumanDate return time in YYYY-MM-DD format
+func HumanDate(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
 func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
-	td.Flash= app.Session.PopString(r.Context(), "flash")
-	td.Error= app.Session.PopString(r.Context(), "error")
+	td.Flash = app.Session.PopString(r.Context(), "flash")
+	td.Error = app.Session.PopString(r.Context(), "error")
 	td.Warning = app.Session.PopString(r.Context(), "warning")
 	td.CSRFToken = nosurf.Token(r)
 	if app.Session.Exists(r.Context(), "user_id") {
@@ -46,8 +54,8 @@ func Template(w http.ResponseWriter, r *http.Request, tmpl string, td *models.Te
 
 	t, ok := tc[tmpl]
 	if !ok {
-			return errors.New("cannot get template from cache")
-		}
+		return errors.New("cannot get template from cache")
+	}
 
 	buf := new(bytes.Buffer)
 
