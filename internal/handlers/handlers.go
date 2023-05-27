@@ -452,6 +452,8 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 }
 
+
+// ShowLogin shows the login screen 
 func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 
 	render.Template(w, r, "login.page.tmpl", &models.TemplateData{
@@ -508,10 +510,20 @@ func (m *Repository) AdminDashboard (w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "admin-dashboard.page.tmpl", &models.TemplateData{})
 }
 
-
+// AdminNewReservations shows all new reserations in admin tool
 func (m *Repository) AdminNewReservations (w http.ResponseWriter, r *http.Request) {
-	render.Template(w, r, "admin-new-reservations.page.tmpl", &models.TemplateData{})
+	reservations , err := m.DB.AllNewReservations()
+	if err != nil {
+		helpers.ServerError(w , err) 
+	}
+	data := make(map[string]interface{})
+	data["reservations"] =reservations
+	render.Template(w, r, "admin-new-reservations.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
 }
+
+// AdminAllReservations shows all reservation in admin dashboard
 func (m *Repository) AdminAllReservations (w http.ResponseWriter, r *http.Request) {
 	reservations , err := m.DB.AllReservations()
 	if err != nil {
@@ -524,7 +536,33 @@ func (m *Repository) AdminAllReservations (w http.ResponseWriter, r *http.Reques
 	})
 }
 
+// AdminShowReservation shows reservation in the admin tool
+func (m *Repository) AdminShowReservation (w http.ResponseWriter , r *http.Request){
+	exploaded := strings.Split(r.RequestURI, "/")
+	id , err := strconv.Atoi(exploaded[4])
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	res , err := m.DB.GetReservationById(id)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	data := make(map[string]interface{})
+	data["reservation"] = res
 
+	src := exploaded[3]
+	stringMap := make(map[string]string)
+	stringMap["src"] = src
+	render.Template(w, r, "admin-reservations-show.page.tmpl", &models.TemplateData{
+		Data : data,
+		StringMap: stringMap,
+		Form : forms.New(nil),
+	})
+}
+
+// AdminReservationsCalendar displays reservation claendar 
 func (m *Repository) AdminReservationsCalendar (w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "admin-reservations-calendar.page.tmpl", &models.TemplateData{})
 }
