@@ -524,7 +524,7 @@ func (m *Repository) AdminNewReservations (w http.ResponseWriter, r *http.Reques
 }
 
 // AdminAllReservations shows all reservation in admin dashboard
-func (m *Repository) AdminAllReservations (w http.ResponseWriter, r *http.Request) {
+func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
 	reservations , err := m.DB.AllReservations()
 	if err != nil {
 		helpers.ServerError(w , err) 
@@ -537,7 +537,7 @@ func (m *Repository) AdminAllReservations (w http.ResponseWriter, r *http.Reques
 }
 
 // AdminShowReservation shows reservation in the admin tool
-func (m *Repository) AdminShowReservation (w http.ResponseWriter , r *http.Request){
+func (m *Repository) AdminShowReservation(w http.ResponseWriter , r *http.Request){
 	exploaded := strings.Split(r.RequestURI, "/")
 	id , err := strconv.Atoi(exploaded[4])
 	if err != nil {
@@ -560,6 +560,47 @@ func (m *Repository) AdminShowReservation (w http.ResponseWriter , r *http.Reque
 		StringMap: stringMap,
 		Form : forms.New(nil),
 	})
+}
+
+// AdminShowReservation shows reservation in the admin tool
+func (m *Repository) AdminPostShowReservation(w http.ResponseWriter , r *http.Request){
+	exploaded:= strings.Split(r.RequestURI, "/")
+
+	src := exploaded[3]
+	stringMap := make(map[string]string)
+	stringMap["src"] = src
+
+
+	id, err := strconv.Atoi(exploaded[4])
+	if err!=nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	res, err := m.DB.GetReservationById(id)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	err= r.ParseForm()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	res.FirstName = r.Form.Get("first_name")
+	res.LastName = r.Form.Get("last_name")
+	res.Email = r.Form.Get("email")
+	res.Phone = r.Form.Get("phone")
+
+
+	err = m.DB.UpdateReservation(res)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	m.App.Session.Put(r.Context(), "flash", "changes saved!")
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
 }
 
 // AdminReservationsCalendar displays reservation claendar 
