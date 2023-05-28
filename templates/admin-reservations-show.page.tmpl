@@ -60,9 +60,15 @@
             </div>
                         
             <hr>
-            <input type="submit" class="btn btn-primary" value="Save">
-            <a class="btn btn-warning" href="/admin/reservations-{{$src}}">Cancel</a>
-            <a class="btn btn-info" href="#!" onclick="processRes({{$res.ID}})" >Mark as processed</a>
+            <div class="float-left">
+                <input type="submit" class="btn btn-primary" value="Save">
+                <a class="btn btn-warning" href="/admin/reservations-{{$src}}">Cancel</a>
+                <a class="btn btn-info" href="#!" onclick="processRes({{$res.ID}})" >Mark as processed</a>
+            </div>
+            <div class="float-right">
+                <a class="btn btn-danger" href="#!" onclick="deleteRes({{$res.ID}})" >Delete</a>
+            </div>
+            <div class="clearfix"></div>
         </form>
     </div>
 {{end}}
@@ -78,6 +84,17 @@
                 callback: function (res) {
                     if (res !== false) {
                     window.location.href = "/admin/process-reservation/{{$src}}/" + id
+                    }
+                }
+            })
+        }
+        function deleteRes(id) {
+            attention.custom({
+                icon: "warning",
+                msg: "Are you sure",
+                callback: function (res) {
+                    if (res !== false) {
+                    window.location.href = "/admin/delete-reservation/{{$src}}/" + id
                     }
                 }
             })
