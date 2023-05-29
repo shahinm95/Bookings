@@ -345,3 +345,32 @@ func (m *postgresDBRepo) UpdateProcessedForReservation(id , processed int ) erro
 
 	return nil
 }
+
+// AllRooms return all rooms in database
+func (m *postgresDBRepo) AllRooms() ([]models.Room , error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	query := `select id, room_name, created_at, updated_at from rooms order by room_name`
+
+	var rooms []models.Room
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return rooms, err
+	}
+	defer rows.Close()
+		
+	for rows.Next() {
+		var room models.Room
+		err := rows.Scan(&room.ID, &room.RoomName, &room.CreatedAt, &room.UpdatedAt)
+		if err != nil {
+			return rooms, err
+		}
+		rooms = append(rooms, room)
+	}
+	if rows.Err(); err !=nil {
+		return rooms, err
+	}
+
+	return rooms , nil
+} 
