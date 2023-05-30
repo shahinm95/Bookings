@@ -10,7 +10,7 @@ import (
 func TestForm_New(t *testing.T) {
 	var data url.Values
 	var testType *Form
-	test2 := struct{
+	test2 := struct {
 		int
 		string
 	}{}
@@ -25,7 +25,7 @@ func TestForm_New(t *testing.T) {
 
 func TestForm_Required(t *testing.T) {
 	r := httptest.NewRequest("POST", "/some-url", nil)
-	
+
 	form := New(r.PostForm)
 
 	isTrue := form.Required("a", "b", "c", "d")
@@ -40,7 +40,7 @@ func TestForm_Required(t *testing.T) {
 	postData.Add("b", "a")
 	postData.Add("c", "a")
 	postData.Add("d", "a")
-	
+
 	r = httptest.NewRequest("POST", "/whatever", nil)
 	r.PostForm = postData
 	form = New(r.PostForm)
@@ -53,10 +53,9 @@ func TestForm_Required(t *testing.T) {
 	}
 }
 
-
-func TestForm_Has (t *testing.T) {
+func TestForm_Has(t *testing.T) {
 	var testfield string
-	r:= httptest.NewRequest("POST", "/some-url", nil)
+	r := httptest.NewRequest("POST", "/some-url", nil)
 	form := New(r.PostForm)
 	rt := form.Has(testfield, r)
 	if rt {
@@ -82,7 +81,7 @@ func TestForm_Has (t *testing.T) {
 
 }
 
-func TestForm_Valid (t *testing.T){
+func TestForm_Valid(t *testing.T) {
 	r := httptest.NewRequest("POST", "/some-url", nil)
 	form := New(r.PostForm)
 	isValid := form.Valid()
@@ -101,7 +100,6 @@ func TestMinLength(t *testing.T) {
 		t.Error("got false for length of value of empty string")
 	}
 
-	
 	postData := url.Values{}
 	postData.Add("name", "shahin")
 	r.PostForm = postData
@@ -114,7 +112,6 @@ func TestMinLength(t *testing.T) {
 		t.Error("should not have an error, but get one")
 	}
 
-
 	if form.MinLength("name", 7, r) {
 		t.Error("value of given field has less length than given length , so it sould be false")
 	}
@@ -125,10 +122,8 @@ func TestMinLength(t *testing.T) {
 
 }
 
-
-func TestForm_IsEmail (t *testing.T) {
+func TestForm_IsEmail(t *testing.T) {
 	r := httptest.NewRequest("POST", "/some-url", nil)
-
 
 	postData := url.Values{}
 	postData.Add("a", "")
@@ -148,4 +143,3 @@ func TestForm_IsEmail (t *testing.T) {
 		t.Error("this string is not an email address so it should be false")
 	}
 }
-

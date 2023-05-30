@@ -119,17 +119,18 @@ func (m *testDBRepo) Authenticate(email, testPassword string) (int, string, erro
 	return id, hashedPassword, nil
 }
 
-func (m *testDBRepo) AllReservations()([]models.Reservation, error) {
+func (m *testDBRepo) AllReservations() ([]models.Reservation, error) {
 	var reservation []models.Reservation
-	return reservation , nil
+	return reservation, nil
 }
 
 // AllNewReservations returns a slice of all reservations
-func (m *testDBRepo) AllNewReservations ()([]models.Reservation, error) {
+func (m *testDBRepo) AllNewReservations() ([]models.Reservation, error) {
 	var reservations []models.Reservation
 	return reservations, nil
 }
-//GetReservationById gets a reservation by given id
+
+// GetReservationById gets a reservation by given id
 func (m *testDBRepo) GetReservationById(id int) (models.Reservation, error) {
 	var res models.Reservation
 	return res, nil
@@ -145,19 +146,19 @@ func (m *testDBRepo) DeleteReservation(id int) error {
 	return nil
 }
 
-// UpdateProcessedForReservation updates procesed for reservation by id 
-func (m *testDBRepo) UpdateProcessedForReservation(id , processed int ) error {
+// UpdateProcessedForReservation updates procesed for reservation by id
+func (m *testDBRepo) UpdateProcessedForReservation(id, processed int) error {
 	return nil
 }
 
 // AllRooms return all rooms in database
-func (m *testDBRepo) AllRooms() ([]models.Room , error) {
+func (m *testDBRepo) AllRooms() ([]models.Room, error) {
 	var rooms []models.Room
-	return rooms , nil
-} 
+	return rooms, nil
+}
 
 // GetRestrictionsForRoomByDate returns room restriction by given date
-func (m *testDBRepo) GetRestrictionsForRoomByDate(roomID int, start, end time.Time) ([]models.RoomRestriction, error){
+func (m *testDBRepo) GetRestrictionsForRoomByDate(roomID int, start, end time.Time) ([]models.RoomRestriction, error) {
 	var restrictions []models.RoomRestriction
 	return restrictions, nil
 }

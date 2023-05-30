@@ -38,7 +38,7 @@ func main() {
 	go listenForMail()
 	fmt.Println("starting mail listener...")
 
-	fmt.Printf("Staring application on port %s", portNumber)	
+	fmt.Printf("Staring application on port %s", portNumber)
 	srv := &http.Server{
 		Addr:    portNumber,
 		Handler: routes(&app),
@@ -50,19 +50,18 @@ func main() {
 	}
 }
 
-
-func run () (*driver.DB, error) {
+func run() (*driver.DB, error) {
 	// change this to true when in production
 	app.InProduction = false
 
 	// error handling
-	infoLog = log.New(os.Stdout, "INFO\t",  log.Ldate|log.Ltime)
+	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
 
 	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
 
-	//what I'm going to put in session 
+	//what I'm going to put in session
 	gob.Register(models.Reservation{})
 	gob.Register(models.User{})
 	gob.Register(models.Reservation{})
@@ -89,7 +88,6 @@ func run () (*driver.DB, error) {
 	}
 	log.Println("connected to database successfully")
 
-	
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache", err)
@@ -105,5 +103,5 @@ func run () (*driver.DB, error) {
 	render.NewRenderer(&app)
 	helpers.NewHelper(&app)
 
-	return db,nil
+	return db, nil
 }

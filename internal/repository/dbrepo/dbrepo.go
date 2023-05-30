@@ -9,24 +9,23 @@ import (
 
 type postgresDBRepo struct {
 	App *config.AppConfig
-	DB *sql.DB
+	DB  *sql.DB
 }
 
-type testDBRepo struct{
+type testDBRepo struct {
 	App *config.AppConfig
-	DB *sql.DB
+	DB  *sql.DB
 }
 
-func NewPostgresRepo (conn *sql.DB , app *config.AppConfig) repository.DatabaseRepo {
+func NewPostgresRepo(conn *sql.DB, app *config.AppConfig) repository.DatabaseRepo {
 	return &postgresDBRepo{
-		App : app, 
-		DB : conn,
+		App: app,
+		DB:  conn,
 	}
 }
 
-func NewTestingsRepo ( app *config.AppConfig) repository.DatabaseRepo {
+func NewTestingsRepo(app *config.AppConfig) repository.DatabaseRepo {
 	return &testDBRepo{
-		App : app, 
+		App: app,
 	}
 }
-

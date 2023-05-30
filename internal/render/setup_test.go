@@ -15,44 +15,43 @@ import (
 
 var session *scs.SessionManager
 var testApp config.AppConfig
+
 func TestMain(m *testing.M) {
-	//what I'm going to put in session 
+	//what I'm going to put in session
 	testApp.InProduction = false
-	
-	infoLog := log.New(os.Stdout, "INFO\t",  log.Ldate|log.Ltime)
+
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	testApp.InfoLog = infoLog
 
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	testApp.ErrorLog = errorLog
 
 	gob.Register(models.Reservation{})
-		// set up the session
-		session = scs.New()
-		session.Lifetime = 24 * time.Hour
-		session.Cookie.Persist = true
-		session.Cookie.SameSite = http.SameSiteLaxMode
-		session.Cookie.Secure = false
-	
-		testApp.Session = session
-		app = &testApp // this would give app inside render.go , session it needs in order to execute the test
+	// set up the session
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = false
 
-		os.Exit(m.Run())
+	testApp.Session = session
+	app = &testApp // this would give app inside render.go , session it needs in order to execute the test
+
+	os.Exit(m.Run())
 }
-
 
 type ResponseWriterType struct {
-
 }
 
-func (r *ResponseWriterType) Header () http.Header {
+func (r *ResponseWriterType) Header() http.Header {
 	var headVar http.Header
 	return headVar
 }
 
-func (r *ResponseWriterType) Write (bytes []byte) (int, error){
+func (r *ResponseWriterType) Write(bytes []byte) (int, error) {
 	length := len(bytes)
 	return length, nil
 }
-func (r *ResponseWriterType) WriteHeader (status int) {
+func (r *ResponseWriterType) WriteHeader(status int) {
 
 }

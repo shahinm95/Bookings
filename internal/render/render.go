@@ -15,10 +15,10 @@ import (
 )
 
 var functions = template.FuncMap{
-	"humanDate" : HumanDate,
-	"formatDate" : FormatDate,
-	"iterate" : Iterate,
-	"add": Add,
+	"humanDate":  HumanDate,
+	"formatDate": FormatDate,
+	"iterate":    Iterate,
+	"add":        Add,
 }
 
 var app *config.AppConfig
@@ -38,20 +38,20 @@ func FormatDate(t time.Time, f string) string {
 	return t.Format(f)
 }
 
-//Itrate return slice of ints , starting at 1 , going to count
+// Itrate return slice of ints , starting at 1 , going to count
 func Iterate(count int) []int {
-	var i int 
+	var i int
 	var items []int
-	for i=0; i < count; i++ {
+	for i = 0; i < count; i++ {
 		items = append(items, i)
 	}
 	return items
 }
-//Add adds two number 
+
+// Add adds two number
 func Add(a, b int) int {
 	return a + b
 }
-
 
 func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
 	td.Flash = app.Session.PopString(r.Context(), "flash")

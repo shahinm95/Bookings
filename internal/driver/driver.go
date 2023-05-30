@@ -13,7 +13,6 @@ type DB struct {
 	SQL *sql.DB
 }
 
-
 var dbConnection = &DB{}
 
 const maxDBConnections = 10
@@ -21,8 +20,8 @@ const maxIdolConnections = 5
 const maxDBLifeTime = 5 * time.Minute
 
 // ConnectSQL create a database pool  for Postgres
-func ConnectSQL (dns string) (*DB, error) {
-	db , err := NewDB(dns)
+func ConnectSQL(dns string) (*DB, error) {
+	db, err := NewDB(dns)
 	if err != nil {
 		panic(err)
 	}
@@ -34,29 +33,27 @@ func ConnectSQL (dns string) (*DB, error) {
 
 	err = testDB(db)
 	if err != nil {
-		return nil , err
+		return nil, err
 	}
 
-
-	return dbConnection , nil
+	return dbConnection, nil
 }
 
 // NewDB create a new database for application
-func NewDB (dns string)(*sql.DB , error){
+func NewDB(dns string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", dns)
 	if err != nil {
 		return nil, err
 	}
 	if err = db.Ping(); err != nil {
-		return nil , err
+		return nil, err
 	}
 
-	return db , nil
+	return db, nil
 }
 
-
 // testDB tries to ping the database
-func testDB (db *sql.DB) error {
+func testDB(db *sql.DB) error {
 	err := db.Ping()
 	if err != nil {
 		return err
