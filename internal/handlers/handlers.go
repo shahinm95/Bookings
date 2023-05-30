@@ -555,6 +555,13 @@ func (m *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request
 	src := exploaded[3]
 	stringMap := make(map[string]string)
 	stringMap["src"] = src
+
+	year := r.URL.Query().Get("y")
+	month := r.URL.Query().Get("m")
+
+	stringMap["year"] = year
+	stringMap["month"] = month
+
 	render.Template(w, r, "admin-reservations-show.page.tmpl", &models.TemplateData{
 		Data:      data,
 		StringMap: stringMap,
@@ -597,8 +604,18 @@ func (m *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Req
 		helpers.ServerError(w, err)
 		return
 	}
+
+	month := r.Form.Get("month")
+	year := r.Form.Get("year")
+
 	m.App.Session.Put(r.Context(), "flash", "changes saved!")
-	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+
+	if year == "" {
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+
+	} else {
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year, month), http.StatusSeeOther)
+	}
 }
 
 // AdminReservationsCalendar displays reservation claendar
@@ -677,7 +694,7 @@ func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Re
 				}
 			} else {
 				// it is a block
-					blockMap[y.StartDate.Format("2006-01-2")] = y.ID
+				blockMap[y.StartDate.Format("2006-01-2")] = y.ID
 			}
 		}
 		data[fmt.Sprintf("reservation_map_%d", x.ID)] = reservationMap
@@ -703,25 +720,25 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 	month, _ := strconv.Atoi(r.Form.Get("m"))
 
 	// proccess the blocks
-	rooms , err := m.DB.AllRooms()
+	rooms, err := m.DB.AllRooms()
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
 	form := forms.New(r.PostForm)
 
-	for _ , x := range rooms {
+	for _, x := range rooms {
 		// get block map from session . loop through emtire map , if we have any entry in map
 		//that does not exits in our posted data , and if the restriction id > 0 , then it is a block we need to remove
 		curMap := m.App.Session.Get(r.Context(), fmt.Sprintf("block_map_%d", x.ID)).(map[string]int)
 		for name, value := range curMap {
-			// ok will be false if the value is not in map 
-			if val , ok := curMap[name] ; ok {
-				// only pay attention to value >0 , ant that are not in the form post 
+			// ok will be false if the value is not in map
+			if val, ok := curMap[name]; ok {
+				// only pay attention to value >0 , ant that are not in the form post
 				//the rest are just placholders for days without blocks
-				if val >0 {
+				if val > 0 {
 					if !form.Has(fmt.Sprintf("remove_block_%d_%s", x.ID, name), r) {
-						// delete the restriction by id 
+						// delete the restriction by id
 						err := m.DB.DeletBlockByID(value)
 						if err != nil {
 							helpers.ServerError(w, err)
@@ -739,7 +756,7 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 			exploaded := strings.Split(name, "_")
 			roomID, _ := strconv.Atoi(exploaded[2])
 			t, _ := time.Parse("2006-01-2", exploaded[3])
-			// insert a new block 
+			// insert a new block
 			err := m.DB.InsertBlockForRoom(roomID, t)
 			if err != nil {
 				log.Println(err)
@@ -768,8 +785,17 @@ func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Requ
 		helpers.ServerError(w, err)
 		return
 	}
+
+	year := r.URL.Query().Get("y")
+	month := r.URL.Query().Get("m")
+
 	m.App.Session.Put(r.Context(), "flash", "Reservation marked as processed")
+
+	if year == "" {
 	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year , month), http.StatusSeeOther)
+	}
 
 }
 
@@ -787,7 +813,16 @@ func (m *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Reque
 		helpers.ServerError(w, err)
 		return
 	}
+	year := r.URL.Query().Get("y")
+	month := r.URL.Query().Get("m")
+
 	m.App.Session.Put(r.Context(), "flash", "Reservation has been deleted")
+
+	if year == "" {
 	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year , month), http.StatusSeeOther)
+	}
+
 
 }
