@@ -62,7 +62,7 @@
             </div>
                         
             <hr>
-            <div class="float-left">
+            <div class="float-start">
                 <input type="submit" class="btn btn-primary" value="Save">
 					{{if eq $src "cal"}}
                         <a class="btn btn-warning" href="#!" onclick="window.history.go(-1)">Cancel</a>
@@ -73,7 +73,7 @@
                         <a class="btn btn-info" href="#!" onclick="processRes({{$res.ID}})" >Mark as processed</a>
                     {{end}}
             </div>
-            <div class="float-right">
+            <div class="float-end">
                 <a class="btn btn-danger" href="#!" onclick="deleteRes({{$res.ID}})" >Delete</a>
             </div>
             <div class="clearfix"></div>

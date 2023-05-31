@@ -135,6 +135,13 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	room, err := m.DB.GetRoomByID(roomID)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "invalid data!")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
 	reservation := models.Reservation{
 		FirstName: r.Form.Get("first_name"),
 		LastName:  r.Form.Get("last_name"),
@@ -143,6 +150,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		StartDate: startDate,
 		EndDate:   endDate,
 		RoomID:    roomID,
+		Room:      room,
 	}
 
 	form := forms.New(r.PostForm)
@@ -772,7 +780,7 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 
 // AdminProcessReservation marks a reservation as processed
 func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Request) {
-	id,_ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	// if err != nil {
 	// 	helpers.ServerError(w, err)
 	// 	return
@@ -791,9 +799,9 @@ func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Requ
 	m.App.Session.Put(r.Context(), "flash", "Reservation marked as processed")
 
 	if year == "" {
-	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
 	} else {
-		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year , month), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year, month), http.StatusSeeOther)
 	}
 
 }
@@ -818,10 +826,9 @@ func (m *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Reque
 	m.App.Session.Put(r.Context(), "flash", "Reservation has been deleted")
 
 	if year == "" {
-	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
 	} else {
-		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year , month), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%s&m=%s", year, month), http.StatusSeeOther)
 	}
-
 
 }
