@@ -1,11 +1,12 @@
 .my-footer {
-    height: 5em;
+    height: 10em;
     background-color: #163b65;
     margin-top: 1.5em;
     padding: 1em;
     color: white;
     font-size: 80%;
 }
+
 
 .room-image {
     max-width: 50%;
