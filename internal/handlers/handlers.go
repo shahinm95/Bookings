@@ -772,14 +772,14 @@ func (m *Repository) AdminPostReservationsCalendar(w http.ResponseWriter, r *htt
 
 // AdminProcessReservation marks a reservation as processed
 func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		helpers.ServerError(w, err)
-		return
-	}
+	id,_ := strconv.Atoi(chi.URLParam(r, "id"))
+	// if err != nil {
+	// 	helpers.ServerError(w, err)
+	// 	return
+	// }
 	src := chi.URLParam(r, "src")
 
-	err = m.DB.UpdateProcessedForReservation(id, 1)
+	err := m.DB.UpdateProcessedForReservation(id, 1)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
@@ -800,14 +800,14 @@ func (m *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Requ
 
 // AdminProcessReservation marks a reservation as processed
 func (m *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		helpers.ServerError(w, err)
-		return
-	}
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	// if err != nil {
+	// 	helpers.ServerError(w, err)
+	// 	return
+	// }
 	src := chi.URLParam(r, "src")
 
-	err = m.DB.DeleteReservation(id)
+	err := m.DB.DeleteReservation(id)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return

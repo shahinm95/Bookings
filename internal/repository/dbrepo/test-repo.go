@@ -116,7 +116,11 @@ func (m *testDBRepo) UpdateUser(u models.User) error {
 func (m *testDBRepo) Authenticate(email, testPassword string) (int, string, error) {
 	var id int
 	var hashedPassword string
-	return id, hashedPassword, nil
+	if email == "me@here.ca" {
+		return id, hashedPassword, nil
+	} else {
+		return 1, "", errors.New("not a valid email address")
+	}
 }
 
 func (m *testDBRepo) AllReservations() ([]models.Reservation, error) {
